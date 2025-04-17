@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+dpa.weather.weatherstarter.WeatherStarterAutoConfiguration
