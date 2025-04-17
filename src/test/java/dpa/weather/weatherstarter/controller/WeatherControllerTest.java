@@ -1,5 +1,8 @@
 package dpa.weather.weatherstarter.controller;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import dpa.weather.weatherstarter.exception.WeatherServiceException;
 import dpa.weather.weatherstarter.responce.WeatherResponse;
 import dpa.weather.weatherstarter.service.WeatherService;
 import org.junit.jupiter.api.Test;
