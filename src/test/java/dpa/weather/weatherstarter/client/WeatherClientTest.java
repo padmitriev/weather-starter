@@ -3,157 +3,136 @@ package dpa.weather.weatherstarter.client;
 import dpa.weather.weatherstarter.exception.WeatherServiceException;
 import dpa.weather.weatherstarter.properties.WeatherProperties;
 import dpa.weather.weatherstarter.responce.WeatherResponse;
+
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.*;
-import org.springframework.web.client.*;
-
+import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-@ExtendWith(MockitoExtension.class)
 class WeatherClientTest {
 
-    @Mock
-    private RestTemplate restTemplate;
-
-    @Mock
-    private WeatherProperties weatherProperties;
-
-    @InjectMocks
+    private WireMockServer wireMockServer;
     private WeatherClient weatherClient;
 
-    private static final String API_URL = "https://api.openweathermap.org/data/2.5/weather";
-    private static final String API_KEY = "5f8f1e322944e656897cbd9549859b6b";
-
     @BeforeEach
-    void setUp(){
-        // Настройка моков перед каждым тестом
-        when(weatherProperties.getApiUrl()).thenReturn(API_URL);
-        when(weatherProperties.getApiKey()).thenReturn(API_KEY);
+    void setUp() {
+        wireMockServer = new WireMockServer(8080);
+        wireMockServer.start();
+        WireMock.configureFor("localhost", 8080);
+
+        WeatherProperties properties = new WeatherProperties();
+        properties.setApiUrl("http://localhost:8080/data/2.5/weather/");
+        properties.setApiKey("test-api-key");
+
+        weatherClient = new WeatherClient(new RestTemplate(), properties);
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+        }
     }
 
     @Test
-    void getWeatherByCity_ShouldReturnValidResponse_WhenRequestIsSuccessful() throws URISyntaxException {
-        // Arrange
-        String city = "London";
+    void getWeatherByCity_ShouldReturnWeatherResponse() throws WeatherServiceException {
+        stubFor(get(urlPathEqualTo("/data/2.5/weather/"))
+                .withQueryParam("q", equalTo("Paris"))
+                .withQueryParam("appid", equalTo("test-api-key"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withBody("""
+                        {
+                            "weather": [{"description": "Sunny"}],
+                            "main": {"temp": 22.0, "feels_like": 20.5, "humidity": 60},
+                            "sys": {"country": "FR"}
+                        }
+                        """)));
 
-        WeatherResponse expectedResponse = new WeatherResponse();
-        expectedResponse.setTemperature(15.5);
-        expectedResponse.setDescription("Cloudy");
+        WeatherResponse response = weatherClient.getWeatherByCity("Paris");
 
-        URI expectedUri = new URI(API_URL + "?q=" + city + "&appid=" + API_KEY);
-
-        when(restTemplate.exchange(
-                eq(expectedUri),
-                eq(HttpMethod.GET),
-                argThat(request -> {
-                    HttpHeaders headers = request.getHeaders();
-                    return headers.getAccept().contains(MediaType.APPLICATION_JSON);
-                }),
-                eq(WeatherResponse.class))
-        ).thenReturn(new ResponseEntity<>(expectedResponse, HttpStatus.OK));
-
-        // Act
-        WeatherResponse actualResponse = weatherClient.getWeatherByCity(city);
-
-        // Assert
-        assertNotNull(actualResponse);
-        assertEquals(city, actualResponse.getCity());
-        assertEquals(15.5, actualResponse.getTemperature());
-        assertEquals("Cloudy", actualResponse.getDescription());
+        assertNotNull(response, "Response should not be null");
+        assertEquals("Paris", response.getCity());
+        assertEquals(22.0, response.getTemperature());
+        assertEquals("Sunny", response.getDescription());
+        assertEquals("FR", response.getCountry());
     }
 
     @Test
-    void getWeatherByCity_ShouldThrowException_WhenApiReturnsError() throws URISyntaxException {
-        // Arrange
-        String city = "InvalidCity";
+    void getWeatherByCity_ShouldThrowException_WhenCityIsInvalid() {
+        // 1. Пустое название города
+        assertThrows(IllegalArgumentException.class, () -> {
+            weatherClient.getWeatherByCity("");
+        });
 
-        URI expectedUri = new URI(API_URL + "?q=" + city + "&appid=" + API_KEY);
+        // 2. Название города - null
+        assertThrows(IllegalArgumentException.class, () -> {
+            weatherClient.getWeatherByCity(null);
+        });
 
-        when(restTemplate.exchange(
-                eq(expectedUri),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(WeatherResponse.class))
-        ).thenThrow(new RestClientResponseException(
-                "City not found",
-                404,
-                "Not Found",
-                HttpHeaders.EMPTY,
-                "City not found".getBytes(),
-                null));
-
-        // Act & Assert
-        WeatherServiceException exception = assertThrows(WeatherServiceException.class,
-                () -> weatherClient.getWeatherByCity(city));
-
-        assertTrue(exception.getMessage().contains("404"));
-        assertTrue(exception.getMessage().contains("City not found"));
+        // 3. Название города содержит только пробелы
+        assertThrows(IllegalArgumentException.class, () -> {
+            weatherClient.getWeatherByCity("   ");
+        });
     }
 
     @Test
-    void getWeatherByCity_ShouldThrowException_WhenConnectionFails() throws URISyntaxException {
-        // Arrange
-        String city = "London";
-        String apiUrl = "https://api.openweathermap.org/data/2.5/weather";
-        String apiKey = "test-api-key";
+    void getWeatherByCity_ShouldThrowWeatherServiceException_WhenApiError() {
+        // 1. Ошибка 404 - город не найден
+        stubFor(get(urlPathEqualTo("/data/2.5/weather/"))
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withBody("""
+                        {
+                            "code": "404",
+                            "message": "city not found"
+                        }
+                        """)));
 
-        URI expectedUri = new URI(apiUrl + "?q=" + city + "&appid=" + apiKey);
+        assertThrows(WeatherServiceException.class, () -> {
+            weatherClient.getWeatherByCity("UnknownCity");
+        });
 
-        when(restTemplate.exchange(
-                eq(expectedUri),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                eq(WeatherResponse.class))
-        ).thenThrow(new ResourceAccessException("Connection timeout"));
+        // 2. Ошибка 401 - неверный API ключ
+        stubFor(get(urlPathEqualTo("/data/2.5/weather/"))
+                .willReturn(aResponse()
+                        .withStatus(401)
+                        .withBody("""
+                        {
+                            "code": 401,
+                            "message": "Invalid API key"
+                        }
+                        """)));
 
-        // Act & Assert
-        WeatherServiceException exception = assertThrows(WeatherServiceException.class,
-                () -> weatherClient.getWeatherByCity(city));
+        assertThrows(WeatherServiceException.class, () -> {
+            weatherClient.getWeatherByCity("Paris");
+        });
 
-        assertTrue(exception.getMessage().contains("Connection to weather service failed"));
+        // 3. Ошибка 500 - серверная ошибка
+        stubFor(get(urlPathEqualTo("/data/2.5/weather/"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("Server error")));
+
+        assertThrows(WeatherServiceException.class, () -> {
+            weatherClient.getWeatherByCity("London");
+        });
     }
 
     @Test
-    void getWeatherByCity_ShouldThrowException_WhenCityIsEmpty() {
-        // Arrange
-        String emptyCity = "";
+    void getWeatherByCity_ShouldThrowWeatherServiceException_WhenConnectionFails() {
+        wireMockServer.stop();
 
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class,
-                () -> weatherClient.getWeatherByCity(emptyCity));
-    }
-
-    @Test
-    void buildWeatherUrl_ShouldThrowException_WhenApiUrlIsInvalid() {
-        // Arrange
-        String invalidUrl = "invalid-url";
-        when(weatherProperties.getApiUrl()).thenReturn(invalidUrl);
-        when(weatherProperties.getApiKey()).thenReturn("test-key");
-
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class,
-                () -> weatherClient.getWeatherByCity("London"));
+        assertThrows(WeatherServiceException.class, () -> {
+            weatherClient.getWeatherByCity("Berlin");
+        });
     }
 }
+
