@@ -29,17 +29,14 @@ public class WeatherControllerIntegrationTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        // Формируем полный URL с параметрами для тестов
         registry.add("weather.api-url", () ->
                 wireMockServer.baseUrl() + "/data/2.5/weather/");
 
-        // Используем тестовый ключ
         registry.add("weather.api-key", () -> "test-key");
     }
 
     @Test
     void getWeather_IntegrationTest() {
-        // Настраиваем WireMock
         wireMockServer.stubFor(get(urlPathEqualTo("/data/2.5/weather/"))
                 .withQueryParam("q", equalTo("Paris"))
                 .withQueryParam("appid", equalTo("test-key"))
