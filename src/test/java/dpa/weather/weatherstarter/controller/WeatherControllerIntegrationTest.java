@@ -38,7 +38,6 @@ public class WeatherControllerIntegrationTest {
 
     @Test
     void getWeather_IntegrationTest() {
-        // Настраиваем WireMock
         wireMockServer.stubFor(WireMock.get(urlPathEqualTo("/data/2.5/weather/"))
                 .withQueryParam("q", equalTo("Paris"))
                 .willReturn(aResponse()
