@@ -1,8 +1,9 @@
 package dpa.weather.weatherstarter.client;
 
+import dpa.weather.weatherstarter.client.implementation.WeatherClientImpl;
 import dpa.weather.weatherstarter.exception.WeatherServiceException;
 import dpa.weather.weatherstarter.properties.WeatherProperties;
-import dpa.weather.weatherstarter.responce.WeatherResponse;
+import dpa.weather.weatherstarter.response.WeatherResponse;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,10 +16,10 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-class WeatherClientTest {
+class WeatherClientImplTest {
 
     private WireMockServer wireMockServer;
-    private WeatherClient weatherClient;
+    private WeatherClientImpl weatherClient;
 
     @BeforeEach
     void setUp() {
@@ -30,7 +31,7 @@ class WeatherClientTest {
         properties.setApiUrl("http://localhost:8080/data/2.5/weather/");
         properties.setApiKey("test-api-key");
 
-        weatherClient = new WeatherClient(new RestTemplate(), properties);
+        weatherClient = new WeatherClientImpl(new RestTemplate(), properties);
     }
 
     @AfterEach

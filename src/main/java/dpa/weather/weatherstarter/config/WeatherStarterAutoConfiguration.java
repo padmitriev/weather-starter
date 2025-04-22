@@ -1,7 +1,7 @@
 package dpa.weather.weatherstarter.config;
 
+import dpa.weather.weatherstarter.client.implementation.WeatherClientImpl;
 import dpa.weather.weatherstarter.client.WeatherClient;
-import dpa.weather.weatherstarter.controller.WeatherController;
 import dpa.weather.weatherstarter.properties.WeatherProperties;
 import dpa.weather.weatherstarter.service.WeatherService;
 import dpa.weather.weatherstarter.service.implementation.WeatherServiceImpl;
@@ -21,23 +21,21 @@ public class WeatherStarterAutoConfiguration {
         return new RestTemplate();
     }
 
+    @ConditionalOnMissingBean
     @Bean
     public WeatherProperties weatherProperties() {
         return new WeatherProperties();
     }
 
+    @ConditionalOnMissingBean
     @Bean
     public WeatherClient weatherClient(RestTemplate restTemplate, WeatherProperties weatherProperties) {
-        return new WeatherClient(restTemplate, weatherProperties);
+        return new WeatherClientImpl(restTemplate, weatherProperties);
     }
 
+    @ConditionalOnMissingBean
     @Bean
-    public WeatherService weatherService(WeatherClient weatherClient) {
-        return new WeatherServiceImpl(weatherClient);
-    }
-
-    @Bean
-    public WeatherController weatherController(WeatherService weatherService) {
-        return new WeatherController(weatherService);
+    public WeatherService weatherService(WeatherClientImpl weatherClientImpl) {
+        return new WeatherServiceImpl(weatherClientImpl);
     }
 }

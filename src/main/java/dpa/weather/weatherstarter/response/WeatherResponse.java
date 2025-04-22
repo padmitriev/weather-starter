@@ -1,16 +1,14 @@
-package dpa.weather.weatherstarter.responce;
+package dpa.weather.weatherstarter.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
+//@RequiredArgsConstructor
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -24,6 +22,12 @@ public class WeatherResponse {
     private Double windSpeed;
     private Long sunrise;
     private Long sunset;
+
+    public WeatherResponse(String city, double temperature, String description) {
+        this.city = city;
+        this.temperature = temperature;
+        this.description = description;
+    }
 
     @JsonProperty("weather")
     private void unpackWeather(List<Weather> weather) {

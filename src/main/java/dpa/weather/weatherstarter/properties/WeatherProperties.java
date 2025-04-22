@@ -13,4 +13,3 @@ public class WeatherProperties {
     private String apiUrl;
     private String apiKey;
 }
-
