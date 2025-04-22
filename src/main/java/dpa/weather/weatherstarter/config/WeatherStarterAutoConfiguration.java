@@ -21,21 +21,21 @@ public class WeatherStarterAutoConfiguration {
         return new RestTemplate();
     }
 
-    @ConditionalOnMissingBean
     @Bean
+    @ConditionalOnMissingBean
     public WeatherProperties weatherProperties() {
         return new WeatherProperties();
     }
 
-    @ConditionalOnMissingBean
     @Bean
+    @ConditionalOnMissingBean
     public WeatherClient weatherClient(RestTemplate restTemplate, WeatherProperties weatherProperties) {
         return new WeatherClientImpl(restTemplate, weatherProperties);
     }
 
-    @ConditionalOnMissingBean
     @Bean
-    public WeatherService weatherService(WeatherClientImpl weatherClientImpl) {
-        return new WeatherServiceImpl(weatherClientImpl);
+    @ConditionalOnMissingBean
+    public WeatherService weatherService(WeatherClient weatherClient) {
+        return new WeatherServiceImpl(weatherClient);
     }
 }
