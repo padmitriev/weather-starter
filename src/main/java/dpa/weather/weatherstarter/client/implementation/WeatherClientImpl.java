@@ -4,6 +4,7 @@ import dpa.weather.weatherstarter.client.WeatherClient;
 import dpa.weather.weatherstarter.exception.WeatherServiceException;
 import dpa.weather.weatherstarter.properties.WeatherProperties;
 import dpa.weather.weatherstarter.response.WeatherResponse;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
