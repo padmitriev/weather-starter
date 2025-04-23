@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-@ConditionalOnProperty(prefix = "weather", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "weather", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class WeatherStarterAutoConfiguration {
 
     @Bean

@@ -45,20 +45,26 @@ public class WeatherClientImpl implements WeatherClient {
             return weatherResponse;
 
         } catch (RestClientResponseException e) {
-            String errorMsg = String.format("API error: %d - %s",
+            String errorMsg = String.format("API error for city '%s'. Status: %d. Response: %s",
+                    city,
                     e.getStatusCode().value(),
                     e.getResponseBodyAsString());
-            log.error("Weather API response error for {}: {}", city, errorMsg);
+            log.error(errorMsg, e);
             throw new WeatherServiceException(errorMsg, e);
 
         } catch (ResourceAccessException e) {
-            String errorMsg = "Connection to weather service failed: " + e.getMessage();
-            log.error(errorMsg);
+            String errorMsg = String.format("Connection failed for city '%s'. URL: %s. Error: %s",
+                    city,
+                    url,
+                    e.getMessage());
+            log.error(errorMsg, e);
             throw new WeatherServiceException(errorMsg, e);
 
         } catch (RestClientException e) {
-            String errorMsg = "Unexpected error while calling weather API: " + e.getMessage();
-            log.error(errorMsg);
+            String errorMsg = String.format("Unexpected API error for city '%s': %s",
+                    city,
+                    e.getMessage());
+            log.error(errorMsg, e);
             throw new WeatherServiceException(errorMsg, e);
         }
     }
@@ -94,7 +100,8 @@ public class WeatherClientImpl implements WeatherClient {
     }
 
     private void validateCityName(String city) {
-        if (city == null || city.trim().isEmpty()) {
+//        if (city == null || city.trim().isEmpty()) {
+        if (city.isBlank()) {
             throw new IllegalArgumentException("City name cannot be null or empty");
         }
     }

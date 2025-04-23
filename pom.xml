@@ -63,15 +63,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.tomakehurst</groupId>
+            <groupId>org.wiremock</groupId>
             <artifactId>wiremock</artifactId>
-            <version>${wiremock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8</artifactId>
-            <version>${wiremock.version}</version>
+<!--            <version>${wiremock.version}</version>-->
+            <version>3.0.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
