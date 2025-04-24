@@ -1,19 +1,12 @@
 package dpa.weather.weatherstarter.config;
 
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
+import dpa.weather.weatherstarter.properties.WeatherProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 @Configuration
+@EnableConfigurationProperties(WeatherProperties.class)
 @PropertySource(value = "classpath:.env", ignoreResourceNotFound = true)
 public class EnvConfig {
-
-    @Value("${WEATHER_API_KEY}")
-    private String weatherApiKey;
-
-    @PostConstruct
-    public void loadEnv() {
-        System.setProperty("WEATHER_API_KEY", weatherApiKey);
-    }
 }
