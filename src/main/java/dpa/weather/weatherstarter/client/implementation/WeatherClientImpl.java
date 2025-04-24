@@ -17,8 +17,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
-
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,7 +25,6 @@ public class WeatherClientImpl implements WeatherClient {
     private final RestTemplate restTemplate;
     private final WeatherProperties weatherProperties;
 
-    @Override
     public WeatherResponse getWeatherByCity(@NonNull String city) throws WeatherServiceException {
         validateCityName(city);
 
@@ -69,7 +66,6 @@ public class WeatherClientImpl implements WeatherClient {
         }
     }
 
-    @Override
     public URI buildWeatherUrl(String city) {
         try {
             return new URI(weatherProperties.getApiUrl())
@@ -100,7 +96,6 @@ public class WeatherClientImpl implements WeatherClient {
     }
 
     private void validateCityName(String city) {
-//        if (city == null || city.trim().isEmpty()) {
         if (city.isBlank()) {
             throw new IllegalArgumentException("City name cannot be null or empty");
         }
