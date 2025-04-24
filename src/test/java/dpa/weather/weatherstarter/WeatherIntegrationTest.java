@@ -15,6 +15,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class WeatherIntegrationTest {
@@ -22,23 +24,27 @@ public class WeatherIntegrationTest {
     @Autowired
     private WeatherClientImpl weatherClient;
 
-    private static final int WIREMOCK_PORT = 8084;
-
-    private static final WireMockServer wireMockServer = new WireMockServer(WIREMOCK_PORT);
+    private static WireMockServer wireMockServer;
 
     @BeforeAll
     static void setup() {
+        wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wireMockServer.start();
+
+        WireMock.configureFor(wireMockServer.port());
     }
 
     @AfterAll
     static void teardown() {
-        wireMockServer.stop();
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+        }
     }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("weather.api-url", () -> "http://localhost:" + WIREMOCK_PORT + "/data/2.5/weather/");
+        registry.add("weather.api-url",
+                () -> "http://localhost:" + wireMockServer.port() + "/data/2.5/weather/");
         registry.add("weather.api-key", () -> "test-key");
     }
 
@@ -68,7 +74,7 @@ public class WeatherIntegrationTest {
         // Assert
         assertNotNull(response);
         assertEquals(city, response.getCity());
-        assertEquals(285.72, response.getTemperature());
+        assertEquals(285.72, response.getTemperature(), 0.01);
         assertEquals("clear sky", response.getDescription());
     }
 }
